@@ -13,6 +13,7 @@ const elements = {
     refreshBtn: document.getElementById('refresh-btn'),
     refreshSpinner: document.getElementById('refresh-spinner'),
     lastUpdatedTime: document.getElementById('last-updated-time'),
+    exportCsvBtn: document.getElementById('export-csv-btn'),
     searchInput: document.getElementById('search-input'),
     clearSearchBtn: document.getElementById('clear-search'),
     typePills: document.getElementById('type-pills'),
@@ -48,6 +49,9 @@ function setupEventListeners() {
     // Refresh & Retry
     elements.refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
     elements.retryBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    
+    // Export CSV
+    elements.exportCsvBtn.addEventListener('click', exportToCSV);
     
     // Search
     elements.searchInput.addEventListener('input', handleSearchInput);
@@ -304,14 +308,29 @@ function renderUpdates() {
                     </svg>
                 </a>
                 
-                <button class="btn btn-twitter tweet-btn" data-id="${update.id}">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span>Tweet</span>
-                </button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary copy-btn" data-id="${update.id}" title="Copy to clipboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    
+                    <button class="btn btn-twitter tweet-btn" data-id="${update.id}">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span>Tweet</span>
+                    </button>
+                </div>
             </div>
         `;
+        
+        // Setup listener on Copy Button
+        card.querySelector('.copy-btn').addEventListener('click', (e) => {
+            copyToClipboard(update, e.currentTarget);
+        });
         
         // Setup listener on Tweet Button
         card.querySelector('.tweet-btn').addEventListener('click', () => {
@@ -443,6 +462,83 @@ function submitTweet() {
     
     closeTweetModal();
     showToast("Opened sharing intent for X / Twitter!");
+}
+
+// Copy to Clipboard Utility
+function copyToClipboard(update, button) {
+    const formatText = `📢 BigQuery Release Note (${update.date}) - ${update.type}:\n\n${update.content_text}\n\nDocumentation Link: ${update.link}`;
+    
+    navigator.clipboard.writeText(formatText).then(() => {
+        const originalHtml = button.innerHTML;
+        button.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span style="color: #10b981;">Copied!</span>
+        `;
+        showToast("Copied release note to clipboard!");
+        
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+        }, 2000);
+    }).catch(err => {
+        console.error("Failed to copy text: ", err);
+        showToast("Failed to copy update to clipboard.");
+    });
+}
+
+// Export Filtered Updates to CSV
+function exportToCSV() {
+    if (state.filteredUpdates.length === 0) {
+        showToast("No updates available to export.");
+        return;
+    }
+    
+    const headers = ["ID", "Date", "ISO Date", "Type", "Content (Plain Text)", "Link"];
+    
+    const escapeCsvValue = (val) => {
+        if (val === null || val === undefined) return '';
+        let formatted = String(val);
+        formatted = formatted.replace(/"/g, '""');
+        if (formatted.includes(',') || formatted.includes('"') || formatted.includes('\n') || formatted.includes('\r')) {
+            formatted = `"${formatted}"`;
+        }
+        return formatted;
+    };
+    
+    const rows = state.filteredUpdates.map(update => [
+        update.id,
+        update.date,
+        update.iso_date,
+        update.type,
+        update.content_text,
+        update.link
+    ]);
+    
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(escapeCsvValue).join(','))
+    ].join('\r\n');
+    
+    try {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        const dateStamp = new Date().toISOString().split('T')[0];
+        link.setAttribute("href", url);
+        link.setAttribute("download", `bigquery_release_notes_${dateStamp}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`Successfully exported ${state.filteredUpdates.length} updates to CSV!`);
+    } catch (error) {
+        console.error("CSV Export error:", error);
+        showToast("Failed to export updates to CSV.");
+    }
 }
 
 // Toast Notifications

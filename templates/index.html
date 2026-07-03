@@ -53,6 +53,14 @@
             
             <div class="header-controls">
                 <span class="last-sync-label">Last updated: <span id="last-updated-time">Checking...</span></span>
+                <button id="export-csv-btn" class="btn btn-secondary" title="Export filtered updates to CSV">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Export CSV</span>
+                </button>
                 <button id="refresh-btn" class="btn btn-primary" title="Refresh release notes">
                     <svg class="spinner-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="refresh-spinner">
                         <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.8273 3 17.3394 4.30159 19 6.34091M19 6.34091V3M19 6.34091H15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
