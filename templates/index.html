@@ -154,6 +154,24 @@
                 <button class="btn btn-secondary" id="reset-filters-btn">Reset Filters</button>
             </div>
 
+            <!-- Sync Warning Banner -->
+            <div class="sync-warning-banner glass-card" id="sync-warning" style="display: none;">
+                <svg class="warning-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; flex-shrink: 0;">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <div class="warning-banner-text" style="flex-grow: 1;">
+                    <strong>Offline Cache:</strong> Could not connect to Google Cloud. Showing cached release notes from <span id="warning-cache-time">some time ago</span>.
+                </div>
+                <button class="banner-close-btn" id="close-warning-btn" title="Dismiss Warning" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%; transition: var(--transition);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
             <!-- Real updates grid -->
             <div class="updates-grid" id="updates-grid">
                 <!-- Javascript will inject cards here -->

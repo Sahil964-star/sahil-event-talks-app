@@ -5,7 +5,8 @@ const state = {
     searchQuery: '',
     activeTypeFilter: 'all',
     selectedUpdate: null,
-    activeHashtags: new Set(['#BigQuery', '#GoogleCloud'])
+    activeHashtags: new Set(['#BigQuery', '#GoogleCloud']),
+    lastUpdatedTime: null
 };
 
 // DOM Elements
@@ -42,7 +43,12 @@ const elements = {
     
     // Toast
     toast: document.getElementById('toast'),
-    toastMessage: document.getElementById('toast-message')
+    toastMessage: document.getElementById('toast-message'),
+    
+    // Warning banner
+    syncWarning: document.getElementById('sync-warning'),
+    warningCacheTime: document.getElementById('warning-cache-time'),
+    closeWarningBtn: document.getElementById('close-warning-btn')
 };
 
 // Setup Event Listeners
@@ -50,6 +56,11 @@ function setupEventListeners() {
     // Refresh & Retry
     elements.refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
     elements.retryBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    
+    // Warning Banner Close
+    elements.closeWarningBtn.addEventListener('click', () => {
+        elements.syncWarning.style.display = 'none';
+    });
     
     // Theme Switcher
     elements.themeToggleBtn.addEventListener('click', toggleTheme);
@@ -105,12 +116,24 @@ async function fetchReleaseNotes(forceRefresh = false) {
             state.updates = result.data;
             
             // Format Last Updated display
-            const updatedDate = new Date(result.last_updated);
-            elements.lastUpdatedTime.textContent = updatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            state.lastUpdatedTime = new Date(result.last_updated);
+            updateRelativeTimeDisplay();
+            
+            // Display banner if utilizing cached fallback data
+            if (result.source === 'cache_fallback') {
+                elements.syncWarning.style.display = 'flex';
+                elements.warningCacheTime.textContent = state.lastUpdatedTime.toLocaleString([], {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+                showToast("Warning: Displaying cached offline data.");
+            } else {
+                elements.syncWarning.style.display = 'none';
+            }
             
             applyFiltersAndSearch();
             
-            if (forceRefresh) {
+            if (forceRefresh && result.source !== 'cache_fallback') {
                 showToast("Updates successfully synced!");
             }
         } else {
@@ -125,6 +148,36 @@ async function fetchReleaseNotes(forceRefresh = false) {
         toggleLoading(false);
         elements.refreshSpinner.classList.remove('spinning');
     }
+}
+
+// Relative Timestamp Synchronizer
+function updateRelativeTimeDisplay() {
+    if (!state.lastUpdatedTime) return;
+    
+    const now = new Date();
+    const diffMs = now - state.lastUpdatedTime;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMins / 60);
+    
+    let text = "";
+    if (diffSecs < 10) {
+        text = "Just now";
+    } else if (diffSecs < 60) {
+        text = `${diffSecs}s ago`;
+    } else if (diffMins === 1) {
+        text = "1 minute ago";
+    } else if (diffMins < 60) {
+        text = `${diffMins}m ago`;
+    } else if (diffHrs === 1) {
+        text = "1 hour ago";
+    } else if (diffHrs < 24) {
+        text = `${diffHrs}h ago`;
+    } else {
+        text = state.lastUpdatedTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+    
+    elements.lastUpdatedTime.textContent = text;
 }
 
 // UI State Toggles
@@ -597,4 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setupEventListeners();
     fetchReleaseNotes(false); // Initial load uses cache
+    
+    // Start recurring relative timestamp update check
+    setInterval(updateRelativeTimeDisplay, 15000);
 });
