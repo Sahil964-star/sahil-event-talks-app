@@ -13,6 +13,7 @@ const elements = {
     refreshBtn: document.getElementById('refresh-btn'),
     refreshSpinner: document.getElementById('refresh-spinner'),
     lastUpdatedTime: document.getElementById('last-updated-time'),
+    themeToggleBtn: document.getElementById('theme-toggle-btn'),
     exportCsvBtn: document.getElementById('export-csv-btn'),
     searchInput: document.getElementById('search-input'),
     clearSearchBtn: document.getElementById('clear-search'),
@@ -49,6 +50,9 @@ function setupEventListeners() {
     // Refresh & Retry
     elements.refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
     elements.retryBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    
+    // Theme Switcher
+    elements.themeToggleBtn.addEventListener('click', toggleTheme);
     
     // Export CSV
     elements.exportCsvBtn.addEventListener('click', exportToCSV);
@@ -553,8 +557,44 @@ function showToast(message) {
     }, 3500);
 }
 
+// Theme Toggle Utilities
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const moonIcon = elements.themeToggleBtn.querySelector('.moon-icon');
+    const sunIcon = elements.themeToggleBtn.querySelector('.sun-icon');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+    } else {
+        document.body.classList.remove('light-theme');
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+    }
+}
+
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    
+    const moonIcon = elements.themeToggleBtn.querySelector('.moon-icon');
+    const sunIcon = elements.themeToggleBtn.querySelector('.sun-icon');
+    
+    if (isLight) {
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+        showToast("Switched to Light Theme");
+    } else {
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+        showToast("Switched to Dark Theme");
+    }
+}
+
 // App Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     setupEventListeners();
     fetchReleaseNotes(false); // Initial load uses cache
 });
