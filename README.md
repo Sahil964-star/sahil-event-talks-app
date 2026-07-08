@@ -85,6 +85,15 @@ Open your browser and navigate to **`http://127.0.0.1:5000`** to view the applic
 
 ---
 
+---
+
+
+## Screenshot
+
+![app_interface](app_interface.png)
+
+---
+
 ## ⚙️ How it Works
 
 ### 1. Backend Processing (`app.py`)
